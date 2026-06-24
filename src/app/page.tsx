@@ -24,13 +24,17 @@ const AircraftDetailPanel = dynamic(() => import('@/components/AircraftDetailPan
   ssr: false,
 });
 
+const FlightPath = dynamic(() => import('@/components/FlightPath'), {
+  ssr: false,
+});
+
 function HomePage() {
   const [bounds, setBounds] = useState<{
     lamin: number; lomin: number; lamax: number; lomax: number;
   } | null>(null);
 
   const { aircraft, loading } = useAircraftData(bounds);
-  const { selected, select } = useSelectedAircraft();
+  const { selected, trackPath, select, close } = useSelectedAircraft();
 
   return (
     <div className="relative h-full w-full">
@@ -41,8 +45,9 @@ function HomePage() {
           onBoundsChange={setBounds}
           onAircraftClick={(a: OpenSkyState) => select(a)}
         />
+        <FlightPath path={trackPath} />
       </Map>
-      <AircraftDetailPanel aircraft={selected} onClose={() => select(null)} />
+      <AircraftDetailPanel aircraft={selected} onClose={close} />
     </div>
   );
 }
