@@ -1,17 +1,20 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, type ReactNode } from 'react';
 import { MapContainer, TileLayer } from 'react-leaflet';
 import { MAP_CONFIG } from '@/lib/map-config';
 import 'leaflet/dist/leaflet.css';
 
-export default function Map() {
+interface Props {
+  children?: ReactNode;
+}
+
+export default function Map({ children }: Props) {
   const mapRef = useRef<L.Map>(null);
 
   useEffect(() => {
     const map = mapRef.current;
     if (!map) return;
-
     map.invalidateSize();
   }, []);
 
@@ -29,6 +32,7 @@ export default function Map() {
         url={MAP_CONFIG.tileUrl}
         attribution={MAP_CONFIG.tileAttribution}
       />
+      {children}
     </MapContainer>
   );
 }

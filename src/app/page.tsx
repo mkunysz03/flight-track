@@ -1,5 +1,8 @@
+'use client';
+
 import dynamic from 'next/dynamic';
 import Toolbar from '@/components/Toolbar';
+import { useAircraftData } from '@/hooks/useAircraftData';
 
 const Map = dynamic(() => import('@/components/Map'), {
   ssr: false,
@@ -10,11 +13,19 @@ const Map = dynamic(() => import('@/components/Map'), {
   ),
 });
 
+const AircraftMarkers = dynamic(() => import('@/components/AircraftMarkers'), {
+  ssr: false,
+});
+
 export default function Home() {
+  const { aircraft, loading } = useAircraftData();
+
   return (
     <div className="relative h-full w-full">
-      <Toolbar />
-      <Map />
+      <Toolbar aircraftCount={aircraft.length} loading={loading} />
+      <Map>
+        <AircraftMarkers aircraft={aircraft} />
+      </Map>
     </div>
   );
 }
