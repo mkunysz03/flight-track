@@ -30,18 +30,21 @@ export function createPlaneIcon(opts: IconOptions): L.DivIcon {
   const shape = SVG_SHAPES[key];
   const color = emergency ? COLORS.emergency : COLORS[cat === 'other' ? 'small' : cat];
   const dot = emergency
-    ? '<span style="position:absolute;inset:-4px;border-radius:50%;border:2.5px solid #ef4444;animation:pulse 1.5s infinite" />'
+    ? '<span style="position:absolute;inset:-6px;border-radius:50%;border:3px solid #ef4444;animation:pulse 1.5s infinite" />'
     : '';
 
-  const html = `<div style="position:relative;display:flex;align-items:center;justify-content:center;width:30px;height:30px;transform:rotate(${opts.heading}deg)">
-    <svg viewBox="0 0 24 24" width="22" height="22" fill="${color}" stroke="#fff" stroke-width="1.2">${shape}</svg>
+  const size = 42;
+  const svgSize = 32;
+
+  const html = `<div style="position:relative;display:flex;align-items:center;justify-content:center;width:${size}px;height:${size}px;transform:rotate(${opts.heading}deg)">
+    <svg viewBox="0 0 24 24" width="${svgSize}" height="${svgSize}" fill="${color}" stroke="#fff" stroke-width="1.5">${shape}</svg>
     ${dot}
   </div>`;
 
   return L.divIcon({
     className: '',
     html,
-    iconSize: [30, 30],
-    iconAnchor: [15, 15],
+    iconSize: [size, size],
+    iconAnchor: [size / 2, size / 2],
   });
 }
