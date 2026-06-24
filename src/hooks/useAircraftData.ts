@@ -4,7 +4,14 @@ import { useEffect, useRef, useState } from 'react';
 import type { OpenSkyState } from '@/api/opensky';
 import { REFRESH_INTERVAL_MS } from '@/lib/map-config';
 
-export function useAircraftData() {
+interface Bounds {
+  lamin: number;
+  lomin: number;
+  lamax: number;
+  lomax: number;
+}
+
+export function useAircraftData(bounds?: Bounds | null) {
   const [aircraft, setAircraft] = useState<OpenSkyState[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -15,8 +22,15 @@ export function useAircraftData() {
 
     async function fetchData() {
       try {
-        const res = await fetch('/api/opensky');
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        let url = '/api/opensky';
+        if (bounds) {
+          url += `?lamin=${bounds.lamin}&lomin=${bounds.lomin}&lamax=${bounds.lamax}&lomax=${bounds.lomax}`;
+        }
+        const res = await fetch(url);
+        if (!res.ok) {
+          const err = await res.json().catch(() => null);
+          throw new Error(err?.error || `HTTP ${res.status}`);
+        }
         const data = await res.json();
         if (mountedRef.current) {
           setAircraft(data);
@@ -40,7 +54,7 @@ export function useAircraftData() {
       mountedRef.current = false;
       clearInterval(interval);
     };
-  }, []);
+  }, [bounds]);
 
   return { aircraft, loading, error };
 }

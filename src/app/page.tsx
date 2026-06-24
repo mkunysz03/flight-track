@@ -1,6 +1,7 @@
 'use client';
 
 import dynamic from 'next/dynamic';
+import { useState } from 'react';
 import Toolbar from '@/components/Toolbar';
 import { useAircraftData } from '@/hooks/useAircraftData';
 
@@ -18,13 +19,17 @@ const AircraftMarkers = dynamic(() => import('@/components/AircraftMarkers'), {
 });
 
 export default function Home() {
-  const { aircraft, loading } = useAircraftData();
+  const [bounds, setBounds] = useState<{
+    lamin: number; lomin: number; lamax: number; lomax: number;
+  } | null>(null);
+
+  const { aircraft, loading } = useAircraftData(bounds);
 
   return (
     <div className="relative h-full w-full">
       <Toolbar aircraftCount={aircraft.length} loading={loading} />
       <Map>
-        <AircraftMarkers aircraft={aircraft} />
+        <AircraftMarkers aircraft={aircraft} onBoundsChange={setBounds} />
       </Map>
     </div>
   );
