@@ -69,6 +69,11 @@ export default function AircraftDetailPanel({ aircraft, onClose }: Props) {
       .finally(() => setMetaLoading(false));
   }, [aircraft]);
 
+  const airline = useMemo(
+    () => getAirlineInfo(aircraft?.callsign ?? null, meta?.operatoricao ?? null),
+    [aircraft?.callsign, meta?.operatoricao]
+  );
+
   if (!aircraft) return null;
 
   const model = meta?.model || '';
@@ -81,11 +86,6 @@ export default function AircraftDetailPanel({ aircraft, onClose }: Props) {
   const serial = meta?.serialnumber || '';
   const owner = meta?.ownername || '';
   const lineNum = meta?.linenumber || '';
-
-  const airline = useMemo(
-    () => getAirlineInfo(aircraft.callsign, meta?.operatoricao),
-    [aircraft.callsign, meta?.operatoricao]
-  );
 
   const catLabel = () => {
     const labels: Record<number, string> = {
