@@ -22,23 +22,34 @@ interface Stamped {
   category: number | null;
 }
 
+function sendBounds(map: L.Map, cb: Props['onBoundsChange']) {
+  const b = map.getBounds();
+  cb?.({
+    lamin: b.getSouth(),
+    lomin: b.getWest(),
+    lamax: b.getNorth(),
+    lomax: b.getEast(),
+  });
+}
+
 export default function AircraftMarkers({ aircraft, onBoundsChange, onAircraftClick }: Props) {
   const map = useMap();
   const markersRef = useRef<Map<string, L.Marker>>(new Map());
   const stampsRef = useRef<Map<string, Stamped>>(new Map());
   const clusterRef = useRef<L.MarkerClusterGroup | null>(null);
+  const boundsSent = useRef(false);
 
   useMapEvents({
-    moveend: () => {
-      const b = map.getBounds();
-      onBoundsChange?.({
-        lamin: b.getSouth(),
-        lomin: b.getWest(),
-        lamax: b.getNorth(),
-        lomax: b.getEast(),
-      });
-    },
+    moveend: () => sendBounds(map, onBoundsChange),
+    zoomend: () => sendBounds(map, onBoundsChange),
   });
+
+  useEffect(() => {
+    if (!boundsSent.current) {
+      sendBounds(map, onBoundsChange);
+      boundsSent.current = true;
+    }
+  }, [map, onBoundsChange]);
 
   useEffect(() => {
     if (!clusterRef.current) {
