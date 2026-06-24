@@ -11,9 +11,10 @@ import type { OpenSkyState } from '@/api/opensky';
 interface Props {
   aircraft: OpenSkyState[];
   onBoundsChange?: (bounds: { lamin: number; lomin: number; lamax: number; lomax: number }) => void;
+  onAircraftClick?: (a: OpenSkyState) => void;
 }
 
-export default function AircraftMarkers({ aircraft, onBoundsChange }: Props) {
+export default function AircraftMarkers({ aircraft, onBoundsChange, onAircraftClick }: Props) {
   const map = useMap();
   const markersRef = useRef<Map<string, L.Marker>>(new Map());
   const clusterRef = useRef<L.MarkerClusterGroup | null>(null);
@@ -86,6 +87,7 @@ export default function AircraftMarkers({ aircraft, onBoundsChange }: Props) {
           direction: 'top',
           offset: L.point(0, -10),
         });
+        marker.on('click', () => onAircraftClick?.(a));
         existing.set(key, marker);
         cluster.addLayer(marker);
       }
