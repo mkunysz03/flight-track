@@ -1,8 +1,9 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import type { OpenSkyState } from '@/api/opensky';
 import { getCategory } from '@/lib/aircraft-utils';
+import { getAirlineInfo } from '@/lib/airline-lookup';
 
 interface AircraftMetadata {
   registration?: string | null;
@@ -81,6 +82,11 @@ export default function AircraftDetailPanel({ aircraft, onClose }: Props) {
   const owner = meta?.ownername || '';
   const lineNum = meta?.linenumber || '';
 
+  const airline = useMemo(
+    () => getAirlineInfo(aircraft.callsign, meta?.operatoricao),
+    [aircraft.callsign, meta?.operatoricao]
+  );
+
   const catLabel = () => {
     const labels: Record<number, string> = {
       0: 'Brak danych', 1: 'Brak kategorii', 2: 'Lekki', 3: 'Mały',
@@ -146,10 +152,18 @@ export default function AircraftDetailPanel({ aircraft, onClose }: Props) {
         </Section>
 
         {/* Linia lotnicza */}
-        {(operator || opCallsign || owner) && (
+        {(airline || operator || opCallsign || owner) && (
           <Section title="Linia lotnicza">
-            {operator && <Row label="Operator" value={operator} />}
-            {opCallsign && <Row label="Callsign opsa" value={opCallsign} />}
+            {airline && <Row label="Linia" value={airline.name} />}
+            {airline?.callsign && airline.callsign !== operator && (
+              <Row label="Callsign" value={airline.callsign} />
+            )}
+            {operator && operator !== airline?.name && (
+              <Row label="Operator" value={operator} />
+            )}
+            {opCallsign && <Row label="Kod opsa" value={opCallsign} />}
+            {airline?.iata && <Row label="IATA" value={airline.iata} />}
+            {airline?.country && <Row label="Kraj" value={airline.country} />}
             {owner && <Row label="Właściciel" value={owner} />}
           </Section>
         )}
