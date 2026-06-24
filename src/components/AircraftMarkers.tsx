@@ -1,12 +1,13 @@
 'use client';
 
-import { useEffect, useRef, useCallback, useState } from 'react';
+import { useEffect, useRef } from 'react';
 import { useMap, useMapEvents } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet.markercluster';
 import 'leaflet.markercluster/dist/MarkerCluster.css';
 import 'leaflet.markercluster/dist/MarkerCluster.Default.css';
 import type { OpenSkyState } from '@/api/opensky';
+import { createPlaneIcon } from './AircraftIcons';
 
 interface Props {
   aircraft: OpenSkyState[];
@@ -14,9 +15,17 @@ interface Props {
   onAircraftClick?: (a: OpenSkyState) => void;
 }
 
+interface Stamped {
+  heading: number;
+  squawk: string | null;
+  spi: boolean;
+  category: number | null;
+}
+
 export default function AircraftMarkers({ aircraft, onBoundsChange, onAircraftClick }: Props) {
   const map = useMap();
   const markersRef = useRef<Map<string, L.Marker>>(new Map());
+  const stampsRef = useRef<Map<string, Stamped>>(new Map());
   const clusterRef = useRef<L.MarkerClusterGroup | null>(null);
 
   useMapEvents({
@@ -46,6 +55,7 @@ export default function AircraftMarkers({ aircraft, onBoundsChange, onAircraftCl
 
     const cluster = clusterRef.current;
     const existing = markersRef.current;
+    const stamps = stampsRef.current;
     const updatedKeys = new Set<string>();
     const bounds = map.getBounds();
 
@@ -56,32 +66,29 @@ export default function AircraftMarkers({ aircraft, onBoundsChange, onAircraftCl
       const key = a.icao24;
       updatedKeys.add(key);
       const heading = a.true_track ?? 0;
-
-      const html = `<div style="transform:rotate(${heading}deg);display:flex;align-items:center;justify-content:center;width:28px;height:28px;">
-        <svg viewBox="0 0 24 24" width="24" height="24" fill="#3b82f6" stroke="#fff" stroke-width="1.5">
-          <path d="M21 16v-2l-8-5V3.5A1.5 1.5 0 0 0 11.5 2 1.5 1.5 0 0 0 10 3.5V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5l8 2.5z"/>
-        </svg>
-      </div>`;
+      const stamp: Stamped = { heading, squawk: a.squawk, spi: a.spi, category: a.category };
 
       if (existing.has(key)) {
         const marker = existing.get(key)!;
-        const newPos: [number, number] = [a.latitude, a.longitude];
-        const curPos = marker.getLatLng();
-        if (Math.abs(curPos.lat - newPos[0]) > 0.01 || Math.abs(curPos.lng - newPos[1]) > 0.01) {
-          marker.setLatLng(newPos);
+        const prev = stamps.get(key)!;
+
+        const posChanged =
+          Math.abs(marker.getLatLng().lat - a.latitude) > 0.01 ||
+          Math.abs(marker.getLatLng().lng - a.longitude) > 0.01;
+        const iconChanged =
+          stamp.heading !== prev.heading ||
+          stamp.squawk !== prev.squawk ||
+          stamp.spi !== prev.spi ||
+          stamp.category !== prev.category;
+
+        if (posChanged || iconChanged) {
+          if (posChanged) marker.setLatLng([a.latitude, a.longitude]);
+          if (iconChanged) marker.setIcon(createPlaneIcon({ heading, squawk: a.squawk, spi: a.spi, category: a.category }));
         }
-        const div = marker.getElement()?.querySelector('div');
-        if (div) {
-          div.style.transform = `rotate(${heading}deg)`;
-        }
+        stamps.set(key, stamp);
         marker.setTooltipContent(a.callsign?.trim() || a.icao24);
       } else {
-        const icon = L.divIcon({
-          className: '',
-          html,
-          iconSize: [28, 28],
-          iconAnchor: [14, 14],
-        });
+        const icon = createPlaneIcon({ heading, squawk: a.squawk, spi: a.spi, category: a.category });
         const marker = L.marker([a.latitude, a.longitude], { icon });
         marker.bindTooltip(a.callsign?.trim() || a.icao24, {
           direction: 'top',
@@ -89,6 +96,7 @@ export default function AircraftMarkers({ aircraft, onBoundsChange, onAircraftCl
         });
         marker.on('click', () => onAircraftClick?.(a));
         existing.set(key, marker);
+        stamps.set(key, stamp);
         cluster.addLayer(marker);
       }
     }
@@ -98,6 +106,7 @@ export default function AircraftMarkers({ aircraft, onBoundsChange, onAircraftCl
         cluster.removeLayer(marker);
         marker.remove();
         existing.delete(key);
+        stamps.delete(key);
       }
     }
 
@@ -107,8 +116,9 @@ export default function AircraftMarkers({ aircraft, onBoundsChange, onAircraftCl
         clusterRef.current = null;
       }
       markersRef.current.clear();
+      stampsRef.current.clear();
     };
-  }, [aircraft, map]);
+  }, [aircraft, map, onAircraftClick]);
 
   return null;
 }
