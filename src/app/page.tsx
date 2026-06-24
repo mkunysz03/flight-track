@@ -3,6 +3,7 @@
 import dynamic from 'next/dynamic';
 import { useState } from 'react';
 import Toolbar from '@/components/Toolbar';
+import AltitudeLegend from '@/components/AltitudeLegend';
 import { useAircraftData } from '@/hooks/useAircraftData';
 import { SelectedProvider, useSelectedAircraft } from '@/hooks/useSelectedAircraft';
 import type { OpenSkyState } from '@/api/opensky';
@@ -47,6 +48,7 @@ function HomePage() {
         />
         <FlightPath path={trackPath} />
       </Map>
+      <AltitudeLegend />
       <AircraftDetailPanel aircraft={selected} onClose={close} />
     </div>
   );
